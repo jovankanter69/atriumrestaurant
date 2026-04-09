@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Restaurant Menu</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg-dark: #e8f4ff;
+      --text-light: #0f172a;
+      --text-muted: #64748b;
+      --accent-1: #0ea5e9;
+      --accent-2: #2563eb;
+      --glass-bg: #f1f5f9;
+      --glass-border: transparent;
+      --font-body: 'Poppins', sans-serif;
+      --font-heading: 'Cormorant Garamond', serif;
+    }
+
+    h1, h2, h3, h4, .splash-text, .brand-title, .detail-title {
+      font-style: italic;
+      font-weight: 300 !important;
+      letter-spacing: 0.5px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Decorative Background Blobs */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -10%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+      animation: drift 20s infinite alternate ease-in-out;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -10%;
+      left: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+      animation: drift 25s infinite alternate-reverse ease-in-out;
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate(0, 0) scale(1);
+      }
+
+      to {
+        transform: translate(5%, 5%) scale(1.1);
+      }
+    }
+
+    /* Screen Management */
+    .screen {
+      min-height: 100vh;
+      width: 100%;
+      flex-direction: column;
+      display: flex;
+    }
+
+    #language-screen {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      z-index: 10;
+      justify-content: flex-start;
+      align-items: center;
+      background-color: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      padding: 5rem 2rem 8rem 2rem;
+    }
+
+    #language-screen.hidden {
+      display: none !important;
+    }
+
+    #menu-screen {
+      display: none;
+      position: relative;
+      z-index: 5;
+      background-color: var(--bg-dark);
+      padding-top: 1rem;
+    }
+
+    #menu-screen.active {
+      display: block;
+    }
+
+    #language-screen, #menu-screen, #feedback-screen {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      will-change: transform, opacity;
+    }
+
+    /* Used by any screen that is about to slide in from the RIGHT */
+    .slide-prepare-right {
+      display: flex !important;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 20;
+      transform: translateX(100%);
+      opacity: 0.5;
+      transition: none !important;
+    }
+    
+    /* Used by any screen that is about to reveal from the LEFT */
+    .slide-prepare-left {
+      display: flex !important;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 20;
+      transform: translateX(-100%);
+      opacity: 0.5;
+      transition: none !important;
+    }
+    
+    /* Reveal to center */
+    .slide-active {
+      transform: translateX(0) !important;
+      opacity: 1 !important;
+    }
+
+    /* Sliding out effects */
+    .slide-out-left {
+      transform: translateX(-100%) !important;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .slide-out-right {
+      transform: translateX(100%) !important;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* Menu Content Animations */
+    #menu-items-container.re-animate {
+      animation: containerFade 0.3s ease-out forwards;
+    }
+
+    @keyframes containerFade {
+      from { opacity: 0.5; }
+      to { opacity: 1; }
+    }
+
+    @keyframes itemCascadeEntrance {
+      from {
+        opacity: 0;
+        transform: translateY(25px) scale(0.98);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes starPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+
+    .star.pop-anim {
+      animation: starPop 0.3s ease-out;
+    }
+
+    .btn:active, .main-nav-btn:active, .sub-nav-btn:active, .sticker-card:active {
+      transform: scale(0.95);
+    }
+
+    #feedback-screen {
+      display: none;
+      /* Keep feedback as a logical overlay */
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      background: var(--bg-dark);
+    }
+
+    #feedback-screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Splash Screen Styles */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100dvh;
+      background: linear-gradient(135deg, #ffffff 0%, var(--bg-dark) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    #splash-screen.slide-up {
+      transform: translateY(-100%);
+    }
+
+    .splash-logo-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 80vw;
+      animation: logoEntrance 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .splash-logo {
+      width: 200px;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 1/1;
+      object-fit: contain;
+      background: white;
+      padding: 20px;
+      border-radius: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    @keyframes logoEntrance {
+      from {
+        opacity: 0;
+        transform: scale(0.8) translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .splash-loader {
+      margin-top: 2rem;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(14, 165, 233, 0.1);
+      border-top: 3px solid var(--accent-1);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .splash-text {
+      margin-top: 1.5rem;
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      color: var(--text-light);
+      opacity: 0;
+      animation: fadeInText 0.8s ease forwards 0.5s;
+    }
+
+    @keyframes fadeInText {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Language Selection Screen */
+    #language-screen {
+      text-align: center;
+    }
+
+    .brand-subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+
+    .lang-btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 350px;
+    }
+
+    .btn {
+      background: white;
+      color: var(--text-light);
+      border: none;
+      padding: 1.25rem 2.5rem;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    /* Split Layout */
+    .split-layout {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      max-width: 1200px;
+      gap: 4rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 800px) {
+      .split-layout {
+        flex-direction: column;
+        gap: 4rem;
+        /* Increased gap for mobile */
+      }
+    }
+
+    .split-side {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 450px;
+    }
+
+    .info-card {
+      background: var(--glass-bg);
+      border-radius: 20px;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--text-light);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .info-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+    }
+
+    /* Sticker Specific Styles */
+    .sticker-card {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transform: rotate(-1.5deg);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .sticker-card:nth-child(even) {
+      transform: rotate(2deg);
+    }
+
+    .sticker-card:hover {
+      transform: translateY(-10px) rotate(0deg) scale(1.05) !important;
+      box-shadow: 10px 15px 30px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+
+    .sticker-card.phone {
+      border-left: 6px solid #0095f6;
+      /* Instagram Blue */
+    }
+
+    .sticker-card.review {
+      border-left: 6px solid #fbbf24;
+      /* Google Star Gold */
+    }
+
+    .sticker-card.instagram {
+      border-left: 6px solid #E1306C;
+      /* Instagram Pink */
+    }
+
+    .sticker-card.opinion {
+      border-left: 6px solid #2563eb;
+      /* Opinion Blue */
+    }
+
+    .info-card .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      transition: transform 0.3s ease;
+    }
+
+    .info-card:hover .icon {
+      transform: scale(1.2);
+    }
+
+    .info-card span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Feedback Form & Stars */
+    .feedback-form {
+      background: var(--glass-bg);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      text-align: left;
+    }
+
+    .rating-group {
+      margin-bottom: 2rem;
+    }
+
+    .rating-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      color: var(--text-light);
+    }
+
+    .stars {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 1.8rem;
+    }
+
+    .star {
+      cursor: pointer;
+      color: #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .star.active {
+      color: #fbbf24;
+      transform: scale(1.1);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      resize: vertical;
+      transition: border-color 0.3s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent-1);
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(45deg, var(--accent-1), var(--accent-2));
+      color: white;
+      border: none;
+      padding: 1.2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+    }
+
+    .thanks-message {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    .thanks-message h2 {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent-1);
+    }
+
+    .feedback-image {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      object-fit: cover;
+    }
+
+    .brand-logo {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      margin-bottom: 1rem;
+      border-radius: 20%;
+      background: #ffffff;
+      padding: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .brand-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      margin-bottom: 3rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header-logo {
+      height: 50px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .lang-dropdown {
+      position: relative;
+    }
+    .lang-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+      padding: 0;
+    }
+    .lang-circle:hover {
+      background: var(--bg-dark);
+    }
+    .lang-menu {
+      position: absolute;
+      top: 42px;
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      min-width: 100px;
+    }
+    .lang-menu.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .lang-menu div {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      transition: background 0.2s;
+    }
+    .lang-menu div:last-child {
+      border-bottom: none;
+    }
+    .lang-menu div:hover {
+      background: var(--bg-dark);
+    }
+
+    .flag-icon { height: 1.2rem; margin-right: 0.5rem; vertical-align: middle; border-radius: 2px; }
+    .flag-icon-circle { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; box-sizing: border-box; }
+    .flag-icon-small { width: 22px; height: 15px; border-radius: 2px; object-fit: cover; }
+
+    .bg-watermark {
+      position: fixed;
+      bottom: -100px;
+      right: -100px;
+      width: 500px;
+      height: 500px;
+      opacity: 0.1;
+      z-index: -2;
+      pointer-events: none;
+      filter: blur(2px) grayscale(0.5);
+    }
+
+    /* Menu Footer with Jump Animation */
+    .menu-footer {
+      width: 85%;
+      max-width: 400px;
+      background: rgba(241, 245, 249, 0.7); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 100px;
+      padding: 10px 15px;
+      display: flex; 
+      justify-content: space-evenly;
+      align-items: center;
+      margin: 4rem auto 3rem auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      
+      /* Initial state for animation */
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .menu-footer.jump-animate {
+      animation: footerJump 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes footerJump {
+      0% { transform: translateY(40px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+
+
+    .nav-circle {
+      width: 48px;
+      height: 48px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      cursor: pointer;
+      border: none;
+    }
+
+    .nav-circle:hover {
+      transform: scale(1.15) translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+
+    .nav-circle svg, .nav-circle span {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-watermark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: rotate(-15deg);
+    }
+
+    .lang-btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .btn {
+      background: var(--glass-bg);
+      border: none;
+      color: var(--text-light);
+      font-family: var(--font-body);
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 1.2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    .flag {
+      margin-right: 10px;
+      font-size: 1.4rem;
+    }
+
+    /* Main Menu Screen */
+    #menu-screen {
+      padding: 0;
+    }
+
+    header {
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+      /* Changed from sticky to relative per user request */
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 100;
+      border-bottom: 1px solid var(--glass-border);
+      border-radius: 40px 40px 0 0;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      transition: color 0.3s ease;
+    }
+
+    .back-btn:hover {
+      color: var(--accent-1);
+    }
+
+    /* Category Nav */
+    .main-nav {
+      display: flex;
+      background: var(--glass-bg);
+      border-radius: 30px;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .main-nav-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.8rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .main-nav-btn.active {
+      background: var(--text-light);
+      color: var(--bg-dark);
+    }
+
+    /* Subcategory Nav */
+    .sub-nav {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 0.5rem 0;
+      scrollbar-width: none;
+    }
+
+    .sub-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sub-nav-btn {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text-light);
+      padding: 0.6rem 1.2rem;
+      border-radius: 20px;
+      white-space: nowrap;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.3s ease;
+    }
+
+    .sub-nav-btn.active {
+      border-color: var(--accent-1);
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--accent-1);
+    }
+
+    /* Menu Items */
+    .menu-container {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .menu-item {
+      background: var(--glass-bg);
+      border: none;
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      animation: itemCascadeEntrance 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .menu-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    .menu-item.house-special .item-photo {
+      border: 4px solid #fbbf24; /* Rich Gold */
+      box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+    }
+
+    .menu-item.best-seller .item-photo {
+      border: 4px solid #ef4444; /* Fire Red */
+      animation: firePulse 3s infinite alternate ease-in-out;
+    }
+
+    @keyframes firePulse {
+      0% {
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+        border-color: #ef4444; 
+      }
+      50% {
+        box-shadow: 0 0 14px rgba(234, 88, 12, 0.6);
+        border-color: #ea580c; 
+      }
+      100% {
+        box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+        border-color: #dc2626;
+      }
+    }
+
+    .item-photo {
+      width: 100px;
+      height: 100px;
+      background: #e2e8f0;
+      border-radius: 12px;
+      margin-right: 1.5rem;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .item-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+
+    @media (max-width: 600px) {
+      .menu-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .item-photo {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        margin-right: 0;
+        margin-bottom: 1.5rem;
+        border-radius: 16px 8px 16px 8px;
+      }
+
+      .item-info {
+        padding-right: 0;
+      }
+
+      .item-price {
+        margin-top: 1rem;
+        align-self: flex-end;
+      }
+    }
+
+    .item-info {
+      flex: 1;
+      padding-right: 1.5rem;
+    }
+
+    .item-title {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600 !important;
+      font-style: italic;
+    }
+
+    .item-desc {
+      color: var(--text-muted);
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 1.15rem;
+      line-height: 1.4;
+    }
+
+    .item-price {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--accent-2);
+    }
+
+    /* empty state */
+    /* Scroll to Top Button */
+    .scroll-top {
+      position: fixed;
+      bottom: 30px; 
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      background: var(--accent-1);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 2000;
+      box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3);
+      font-size: 1.15rem;
+    }
+
+    .scroll-top.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .scroll-top:hover {
+      background: var(--accent-2);
+      transform: scale(1.1);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 32px;
+      max-width: 90%;
+      max-height: 90vh;
+      width: 500px;
+      position: relative;
+      padding: 2.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow-y: auto;
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: #f1f5f9;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .modal-close:hover {
+      background: #e2e8f0;
+      color: var(--text-light);
+      transform: rotate(90deg);
+    }
+
+    #image-modal .modal-content {
+      padding: 0;
+      width: 90vw;
+      max-width: 360px;
+      height: 90vw;
+      max-height: 360px;
+      background: transparent;
+      box-shadow: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #image-modal img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 24px;
+      display: block;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .detail-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-subtitle {
+      color: var(--accent-1);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+
+    .detail-body {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .detail-section-title {
+      color: var(--text-light);
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+  </style>
+</head>
+
+<body style="overflow: hidden;">
+
+  <!-- Splash Screen -->
+  <div id="splash-screen">
+    <div class="splash-logo-container">
+      <img src="images (1).jpg" alt="Atrium Logo" class="splash-logo">
+      <h1 class="splash-text">Dobrodošli u Atrium</h1>
+      <div class="splash-loader"></div>
+    </div>
+  </div>
+
+
+
+  <script src="https://www.gstatic.com/firebasejs/10.20.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.20.0/firebase-firestore.js"></script>
+
+
+
+  <!-- Abstract Blobs Removed -->
+
+  <!-- Language Selection Screen -->
+  <div id="language-screen" class="screen active">
+
+    <div class="split-layout">
+      <!-- Left: Languages -->
+      <div class="split-side">
+        <div>
+          <img src="images (1).jpg" alt="Atrium Logo" class="brand-logo" onclick="openAbout()" style="cursor: pointer;">
+          <p class="brand-subtitle">Caffe &amp; Restaurant</p>
+        </div>
+
+        <div class="lang-btn-container">
+          <button class="btn" onclick="selectLanguage('en')">
+            <img src="https://flagcdn.com/w40/gb.png" class="flag-icon" alt="EN"> English
+          </button>
+          <button class="btn" onclick="selectLanguage('de')">
+            <img src="https://flagcdn.com/w40/de.png" class="flag-icon" alt="DE"> Deutsch
+          </button>
+          <button class="btn" onclick="selectLanguage('sr')">
+            <img src="https://flagcdn.com/w40/rs.png" class="flag-icon" alt="SR"> Srpski
+          </button>
+        </div>
+      </div>
+
+      <!-- Right side removed to simplify landing page -->
+    </div>
+  </div>
+
+  <!-- Feedback Screen -->
+  <div id="feedback-screen" class="screen">
+    <div
+      style="padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; flex:1;">
+      <button class="back-btn" onclick="closeFeedback()" style="align-self: flex-start; margin-bottom: 2rem;">
+        ← <span id="ui-back-feedback">Nazad</span>
+      </button>
+
+      <div class="feedback-form" id="feedback-form-content">
+        <h2 class="brand-title" id="ui-opinion-title"
+          style="font-size: 2.2rem; margin-bottom: 1.5rem; text-align: center;">Vaši utisci</h2>
+
+        <div class="rating-group">
+          <label class="rating-label" id="ui-service-label">Kvalitet usluge</label>
+          <div class="stars" data-category="service">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+          </div>
+        </div>
+
+        <div class="rating-group">
+          <label class="rating-label" id="ui-food-label">Kvalitet hrane</label>
+          <div class="stars" data-category="food">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+          </div>
+        </div>
+
+        <label class="rating-label" id="ui-comment-label">Vaš komentar</label>
+        <textarea id="feedback-comment" placeholder="Recite nam više..."></textarea>
+
+        <button class="submit-btn" onclick="submitFeedback()" id="ui-submit-btn">Pošaljite utisak</button>
+      </div>
+
+      <div class="thanks-message" id="feedback-thanks">
+        <div class="icon" style="font-size: 4rem; margin-bottom: 1rem;">✨</div>
+        <h2 id="ui-thanks-title">Hvala Vam!</h2>
+        <p id="ui-thanks-text" style="color: var(--text-muted);">Vaši utisci nam pomažu da budemo bolji.</p>
+        <button class="btn" onclick="closeFeedback()" style="margin-top: 2rem; padding: 1rem 2rem;">Zatvori</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Menu Screen -->
+  <div id="menu-screen" class="screen">
+    <header>
+      <div class="header-top">
+        <button class="back-btn" onclick="goBack()">
+          ← <span id="ui-back">Back</span>
+        </button>
+        <img src="images (1).jpg" alt="Atrium Logo" class="header-logo">
+        <div class="lang-dropdown" id="lang-dropdown">
+          <button class="lang-circle" onclick="toggleLangDropdown()">
+            <img id="current-lang-flag" src="https://flagcdn.com/w40/rs.png" class="flag-icon-circle" alt="Lang">
+          </button>
+          <div class="lang-menu" id="lang-menu">
+            <div onclick="selectLanguage('en'); closeLangDropdown()"><img src="https://flagcdn.com/w40/gb.png" class="flag-icon-small"> EN</div>
+            <div onclick="selectLanguage('de'); closeLangDropdown()"><img src="https://flagcdn.com/w40/de.png" class="flag-icon-small"> DE</div>
+            <div onclick="selectLanguage('sr'); closeLangDropdown()"><img src="https://flagcdn.com/w40/rs.png" class="flag-icon-small"> SR</div>
+            <div onclick="selectLanguage('ru'); closeLangDropdown()"><img src="https://flagcdn.com/w40/ru.png" class="flag-icon-small"> RU</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-nav">
+        <button class="main-nav-btn active" id="btn-food" onclick="setMainCategory('food')">Food</button>
+        <button class="main-nav-btn" id="btn-drinks" onclick="setMainCategory('drinks')">Drinks</button>
+      </div>
+
+      <div class="sub-nav" id="sub-nav-container">
+        <!-- Subcategories will be injected here -->
+      </div>
+    </header>
+
+    <div class="menu-container" id="menu-items-container">
+      <!-- Menu items will be injected here -->
+    </div>
+
+    <!-- Navigation Footer under last meal -->
+    <div class="menu-footer">
+      <a href="https://www.instagram.com/cafferestaurantatrium/?hl=en" target="_blank" class="nav-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="url(#ig-grad)">
+          <defs>
+            <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#f09433;stop-opacity:1" />
+              <stop offset="25%" style="stop-color:#e6683c;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#dc2743;stop-opacity:1" />
+              <stop offset="75%" style="stop-color:#cc2366;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#bc1888;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.266.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+        </svg>
+      </a>
+      <button onclick="openFeedback()" class="nav-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+        </svg>
+      </button>
+      <a href="https://www.google.com/search?sxsrf=ANbL-n6SQjrSzeQK6Zjx1i3Uyj5hwWR1xg:1775741837926&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOWkRBPCs3VJ22Y6ltjVZiwIlOzlTZZ6BMNqVhYMcLeqFoHcUGrYvwlwuRj0fDr4Cq7uV-57K_23twYqJul1MuGdv2_D35-Sx4BTGKXp8lK4g04cNYw%3D%3D&q=Caffe+restaurant+Atrium+Reviews&cshid=1775741852469703#lrd=0x134ca1095b29348f:0xec2e02b533b60294,3,,,," target="_blank" class="nav-circle">
+        <span style="font-size: 1.5rem;">⭐</span>
+      </a>
+      <a href="tel:+38766862627" class="nav-circle">
+        <span style="font-size: 1.5rem;">📞</span>
+      </a>
+    </div>
+  </div>
+
+  <button class="scroll-top" id="scroll-top-btn" onclick="scrollToMenuTop()">
+    ↑
+  </button>
+
+  <div class="bg-watermark" style="opacity: 0.3;">
+    <img src="images (1).jpg" alt="">
+  </div>
+
+  <!-- Image Modal -->
+  <div id="image-modal" class="modal-overlay" onclick="closeModals()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModals()">✕</button>
+      <img id="modal-img" src="" alt="Zoomed Image">
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="modal-overlay" onclick="closeModals()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModals()">✕</button>
+      <div class="detail-header">
+        <h2 id="detail-item-name" class="detail-title"></h2>
+        <span id="detail-ui-making" class="detail-subtitle">How it's made</span>
+      </div>
+      <div id="detail-item-making" class="detail-body">
+        <!-- Content injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div id="about-modal" class="modal-overlay" onclick="closeAbout()">
+    <div class="modal-content about-modal-content" onclick="event.stopPropagation()" style="max-width: 500px; padding: 2.5rem; text-align: left;">
+      <button class="modal-close" onclick="closeAbout()">✕</button>
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="images (1).jpg" alt="Atrium Logo" style="width: 100px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
+      </div>
+      <h2 style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--text-light); text-align: center; margin-bottom: 0.5rem;">Caffe &amp; Restaurant Atrium</h2>
+      <p style="text-align: center; color: var(--accent-1); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 1.5rem;">Nevesinje, Bosnia & Herzegovina</p>
+      
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem; margin-bottom: 1.5rem;">
+        Smješten u srcu Nevesinja, Caffe & Restaurant Atrium nudi jedinstveno iskustvo uživanja u hrani i piću u ugodnom ambijentu. Naš tim posvećen je pripremi jela od najsvježijih lokalnih sastojaka, kombinujući tradicionalne recepte sa modernim pristupom kulinarstvu.
+      </p>
+      <p style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem; margin-bottom: 1.5rem;">
+        Nevesinje, grad bogate istorije i prirodnih ljepota, savršeno je okruženje za uživanje u našoj ponudi. Bilo da tražite savršenu kafu, osvježavajuće piće ili ukusan obrok — Atrium je pravo mjesto za vas.
+      </p>
+
+      <div style="background: linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(14,165,233,0.06) 100%); border-radius: 16px; padding: 1.5rem; margin-top: 1rem;">
+        <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-light); margin-bottom: 1rem; text-align: center;">⏰ Radno vrijeme</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--text-light); font-size: 1rem;">
+            <span>Ponedeljak - Petak</span>
+            <span>07:00 - 23:00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--text-light); font-size: 1rem;">
+            <span>Subota</span>
+            <span>08:00 - 00:00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--text-light); font-size: 1rem;">
+            <span>Nedjelja</span>
+            <span>08:00 - 23:00</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <a href="tel:+38766862627" style="color: var(--accent-1); font-weight: 700; text-decoration: none; font-size: 1.1rem;">📞 +387 66 862 627</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Data Definitions ---
+
+    const uiTranslations = {
+      en: {
+        back: "Back", food: "Food", drink: "Drink", empty: "No items found in this category.",
+        opinionBtn: "Leave us your opinion", opinionTitle: "Feedback", serviceLabel: "Service Quality",
+        foodLabel: "Food Quality", commentLabel: "Your Comment", submitBtn: "Submit Feedback",
+        thanksTitle: "Thank You!", thanksText: "Your feedback helps us grow.", placeholder: "Tell us more...",
+        makingTitle: "Preparation Details", callUs: "Call Us", rateUs: "Rate us on Google"
+      },
+      de: {
+        back: "Zurück", food: "Essen", drink: "Getränke", empty: "Keine Artikel in dieser Kategorie gefunden.",
+        opinionBtn: "Deine Meinung hinterlassen", opinionTitle: "Feedback", serviceLabel: "Servicequalität",
+        foodLabel: "Essenqualität", commentLabel: "Dein Kommentar", submitBtn: "Feedback absenden",
+        thanksTitle: "Vielen Dank!", thanksText: "Dein Feedback hilft uns zu wachsen.", placeholder: "Erzähl uns mehr...",
+        makingTitle: "Zubereitungsdetails", callUs: "Rufen Sie uns an", rateUs: "Bewerten Sie uns bei Google"
+      },
+      sr: {
+        back: "Nazad", food: "Hrana", drink: "Piće", empty: "Nema artikala u ovoj kategoriji.",
+        opinionBtn: "Ostavite nam vaše mišljenje", opinionTitle: "Utisci", serviceLabel: "Kvalitet usluge",
+        foodLabel: "Kvalitet hrane", commentLabel: "Vaš komentar", submitBtn: "Pošaljite utisak",
+        thanksTitle: "Hvala Vam!", thanksText: "Vaši utisci nam pomažu da budemo bolji.", placeholder: "Recite nam više...",
+        makingTitle: "Detalji pripreme", callUs: "Pozovite nas", rateUs: "Ocijenite nas na Google-u"
+      },
+      ru: {
+        back: "Назад", food: "Еда", drink: "Напитки", empty: "В этой категории нет блюд.",
+        opinionBtn: "Оставьте отзыв", opinionTitle: "Отзывы", serviceLabel: "Качество сервиса",
+        foodLabel: "Качество еды", commentLabel: "Ваш комментарий", submitBtn: "Отправить",
+        thanksTitle: "Спасибо!", thanksText: "Ваш отзыв помогает нам стать лучше.", placeholder: "Расскажите нам больше...",
+        makingTitle: "Детали приготовления", callUs: "Позвонить", rateUs: "Оцените нас в Google"
+      }
+    };
+
+    const subcategoryTranslations = {
+      all: { en: "All", de: "Alle", sr: "Sve", ru: "Все" },
+      best_sellers: { en: "Most Sold", de: "Meistverkaufte", sr: "Najprodavanije", ru: "Самые продаваемые" },
+      house_special: { en: "House Suggestion", de: "Hausspezialität", sr: "Preporuka kuće", ru: "Рекомендация заведения" },
+      grilled: { en: "Grilled", de: "Gegrillt", sr: "Sa roštilja", ru: "Гриль" },
+      cooked: { en: "Cooked", de: "Gekocht", sr: "Kuvana jela", ru: "Готовые блюда" },
+      coffee: { en: "Coffee", de: "Kaffee", sr: "Kafa", ru: "Кофе" },
+      juices: { en: "Juices", de: "Säfte", sr: "Sokovi", ru: "Напитки" },
+      natural_juices: { en: "Natural Juices", de: "Natürliche Säfte", sr: "Prirodni sokovi", ru: "Свежевыжатые соки" },
+      alcohol: { en: "Alcohol", de: "Alkohol", sr: "Alkoholna pića", ru: "Алкоголь" }
+    };
+
+    // Helper specific to categories mapping
+    const categoriesMap = {
+      food: ['all', 'best_sellers', 'house_special', 'grilled', 'cooked'],
+      drinks: ['all', 'coffee', 'juices', 'natural_juices', 'alcohol']
+    };
+
+    const menuItems = [
+      // FOOD - BEST SELLERS
+      {
+        main_category: 'food', sub_category: 'best_sellers', price: 9.50,
+        photo: 'images (1).jpg',
+        name: { en: 'Atrium Burger', de: 'Atrium Burger', sr: 'Atrium Burger', ru: 'Гамбургер Атриум' },
+        desc: {
+          en: 'Our most popular premium beef burger with secret sauce.',
+          de: 'Unser beliebtester Premium-Rindfleischburger.',
+          sr: 'Naš najpopularniji burger sa vrhunskom junetinom.',
+          ru: 'Наш самый популярный бургер с говядиной премиум-класса.'
+        },
+        making: {
+          en: 'Premium beef grilled, topped with fresh lettuce, tomatoes, and our secret house sauce, served in a brioche bun.',
+          de: 'Premium-Rindfleisch gegrillt, belegt mit frischem Salat, Tomaten und unserer geheimen Haussauce.',
+          sr: 'Jedinstveni burger od najkvalitetnije junetine sa svježim povrćem i našim tajnim prelivom.',
+          ru: 'Говядина премиум-класса на гриле, со свежим салатом, помидорами и нашим фирменным секретным соусом.'
+        }
+      },
+      {
+        main_category: 'food', sub_category: 'best_sellers', price: 7.50,
+        photo: 'images (1).jpg',
+        name: { en: 'Classic Caesar Salad', de: 'Klassischer Caesar Salat', sr: 'Cezar salata', ru: 'Салат Цезарь' },
+        desc: {
+          en: 'Crisp romaine lettuce, grilled chicken, and parmesan.',
+          de: 'Knackiger Römersalat, gegrilltes Hähnchen und Parmesan.',
+          sr: 'Hrskava zelena salata, grilovana piletina i parmezan.',
+          ru: 'Хрустящий салат ромэн, курица на гриле и пармезан.'
+        },
+        making: {
+          en: 'Fresh baby romaine tossed with house-made creamy caesar dressing, garlic croutons, and grilled chicken breast.',
+          de: 'Frischer Mini-Römersalat, angemacht mit hausgemachtem cremigem Caesar-Dressing, Knoblauchcroutons und gegrillter Hähnchenbrust.',
+          sr: 'Svježa zelena salata, naš domaći preliv, krutoni i piletina roštiljana do savršenstva.',
+          ru: 'Свежий салат ромэн с домашним сливочным соусом Цезарь, чесночными гренками и куриной грудкой.'
+        }
+      },
+      {
+        main_category: 'food', sub_category: 'best_sellers', price: 8.00,
+        photo: 'images (1).jpg',
+        name: { en: 'Margherita Pizza', de: 'Pizza Margherita', sr: 'Pica Margarita', ru: 'Пицца Маргарита' },
+        desc: {
+          en: 'Fresh mozzarella, tomato sauce, and basil.',
+          de: 'Frischer Mozzarella, Tomatensauce und Basilikum.',
+          sr: 'Svježa mocarela, pelat i svježi bosiljak.',
+          ru: 'Свежая моцарелла, томатный соус и базилик.'
+        },
+        making: {
+          en: 'Dough fermented for 48 hours, topped with San Marzano tomatoes, fresh mozzarella, baked in a wood-fired oven.',
+          de: '48 Stunden lang gereifter Teig, belegt mit San-Marzano-Tomaten, frischem Mozzarella, im Holzofen gebacken.',
+          sr: 'Tijesto koje odležava 48 sati pečeno na drva sa najsvježijom mocarelom i paradajz pelatom.',
+          ru: 'Тесто ферментируется 48 часов, покрывается помидорами Сан-Марцано и свежей моцареллой, выпекается в дровяной печи.'
+        }
+      },
+      // FOOD - HOUSE SPECIAL
+      {
+        main_category: 'food', sub_category: 'house_special', price: 21.00,
+        photo: 'images (1).jpg',
+        name: { en: 'Atrium Signature Platter', de: 'Atrium Spezialplatte', sr: 'Atrium plata', ru: 'Тарелка Атриум' },
+        desc: {
+          en: 'A selection of our best meats, designed for two.',
+          de: 'Eine Auswahl unserer besten Fleischsorten für zwei Personen.',
+          sr: 'Kombinacija najboljih komada mesa za dvije osobe.',
+          ru: 'Ассорти из лучших сортов мяса для двоих.'
+        },
+        making: {
+          en: 'An impressive assortment of ribeye, grilled chicken, sausages, and roasted vegetables served on a hot wooden platter.',
+          de: 'Eine beeindruckende Auswahl an Ribeye, gegrilltem Hähnchen, Würstchen und geröstetem Gemüse, serviert auf einer heißen Holzplatte.',
+          sr: 'Kombinacija dimljenog mesa, piletine i teletine servirana sa povrćem na vrućoj podlozi.',
+          ru: 'Впечатляющий ассортимент рибай, курицы на гриле, колбасок и запеченных овощей.'
+        }
+      },
+      {
+        main_category: 'food', sub_category: 'house_special', price: 15.50,
+        photo: 'images (1).jpg',
+        name: { en: 'Truffle Mushroom Pasta', de: 'Trüffelpilz-Pasta', sr: 'Tjestenina sa tartufima', ru: 'Паста с трюфелем' },
+        desc: {
+          en: 'Creamy homemade pasta with wild mushrooms and truffle oil.',
+          de: 'Cremige hausgemachte Pasta mit Waldpilzen und Trüffelöl.',
+          sr: 'Domaća kremasta tjestenina sa šumskim gljivama i uljem od tartufa.',
+          ru: 'Сливочная домашняя паста с грибами и трюфельным маслом.'
+        },
+        making: {
+          en: 'Handmade tagliatelle cooked al dente, tossed in a parmesan cream sauce with sauteed wild mushrooms and white truffle oil.',
+          de: 'Handgemachte Tagliatelle al dente gekocht, in einer Parmesansahnesauce mit sautierten Wildpilzen und weißem Trüffelöl.',
+          sr: 'Domaća taljatela pomiješana u sosu od parmezana, šumskih gljiva i ulja od bijelog tartufa.',
+          ru: 'Домашняя лапша аль денте, обжаренная в сливочном соусе с шампиньонами и маслом белого трюфеля.'
+        }
+      },
+      {
+        main_category: 'food', sub_category: 'house_special', price: 13.00,
+        photo: 'images (1).jpg',
+        name: { en: 'Salmon Fillet', de: 'Lachsfilet', sr: 'Filet lososa', ru: 'Филе лосося' },
+        desc: {
+          en: 'Perfectly seared salmon with a lemon butter glaze.',
+          de: 'Perfekt gebratener Lachs mit Zitronenbutter-Glasur.',
+          sr: 'Savršeno grilovan losos sa prelivom od limuna i putera.',
+          ru: 'Идеально обжаренный лосось с лимонно-масляной глазурью.'
+        },
+        making: {
+          en: 'Fresh Atlantic salmon fillet pan-seared skin-on to achieve a crispy crust, finished in the oven with garlic butter.',
+          de: 'Frisches Atlantisches Lachsfilet in der Pfanne knusprig gebraten, im Ofen mit Knoblauchbutter verfeinert.',
+          sr: 'Svježi losos pečen na površini da zadrži hrskavost i sokove, sa dodatkom putera i limuna.',
+          ru: 'Свежее филе атлантического лосося обжаривается на сковороде до хрустящей корочки.'
+        }
+      },
+      // FOOD - GRILLED
+      {
+        main_category: 'food', sub_category: 'grilled', price: 18.00,
+        photo: 'images/ribeye.jpg',
+        name: { en: 'Grilled Ribeye Steak', de: 'Gegrilltes Ribeye-Steak', sr: 'Ramstek sa roštilja', ru: 'Рибай стейк на гриле' },
+        desc: {
+          en: 'Premium cut beef with garlic butter and rosemary.',
+          de: 'Premium-Rindfleisch mit Knoblauchbutter und Rosmarin.',
+          sr: 'Premium komad govedine sa puterom od bijelog luka i ruzmarinom.',
+          ru: 'Премиальная говядина с чесночным маслом и розмарином.'
+        },
+        making: {
+          en: 'Our ribeye is dry-aged for 21 days, seasoned with sea salt and cracked black pepper, then seared over high-heat charcoal until perfectly medium-rare. Finished with a house-made compound garlic butter.',
+          de: 'Unser Ribeye wird 21 Tage lang trocken gereift, mit Meersalz und frisch gemahlenem schwarzem Pfeffer gewürzt und dann über Holzkohle bei hoher Hitze perfekt medium-rare gebraten. Abgerundet mit einer hausgemachten Knoblauchbutter.',
+          sr: 'Naš rami-stek odležava 21 dan, začinjen morskom solju i krupnim biberom, a zatim se peče na vrelom ćumuru do savršenog srednjeg pečenja. Završava se domaćim puterom sa bijelim lukom.',
+          ru: 'Наш рибай выдерживается 21 день, приправляется морской солью и черным перцем, затем обжаривается на углях до прожарки medium-rare. Подается с домашним чесночным маслом.'
+        },
+        photo: 'images/ribeye.jpg'
+      },
+      {
+        main_category: 'food', sub_category: 'grilled', price: 12.00,
+        photo: 'images/breast.jpg',
+        name: { en: 'Grilled Chicken Breast', de: 'Gegrillte Hähnchenbrust', sr: 'Piletina sa roštilja', ru: 'Куриная грудка на гриле' },
+        desc: {
+          en: 'Served with seasonal grilled vegetables.',
+          de: 'Serviert mit saisonalem gegrilltem Gemüse.',
+          sr: 'Služeno sa sezonskim grilovanim povrćem.',
+          ru: 'Подается с сезонными овощами гриль.'
+        },
+        making: {
+          en: 'Fresh chicken breast marinated in lemon, herbs, and olive oil for 12 hours. Grilled slow to maintain juiciness and served alongside flame-grilled Mediterranean vegetables.',
+          de: 'Frische Hähnchenbrust, 12 Stunden lang in Zitrone, Kräutern und Olivenöl mariniert. Langsam gegrillt, um die Saftigkeit zu bewahren, und serviert mit über offener Flamme gegrilltem mediterranem Gemüse.',
+          sr: 'Svježe pileće bijelo meso marirano u limunu, začinskom bilju i maslinovom ulju 12 sati. Pečeno lagano na roštilju kako bi zadržalo sočnost, uz povrće pečeno na vatri.',
+          ru: 'Куриная грудка маринуется в лимоне и травах в течение 12 часов. Медленно обжаривается для сохранения сочности и подается с овощами.'
+        }
+      },
+      // FOOD - COOKED
+      {
+        main_category: 'food', sub_category: 'cooked', price: 14.50,
+        photo: 'images/beef stew.jpg',
+        name: { en: 'Traditional Beef Stew', de: 'Traditioneller Rindereintopf', sr: 'Tradicionalni goveđi gulaš', ru: 'Традиционный гуляш' },
+        desc: {
+          en: 'Slow-cooked for 8 hours with root vegetables.',
+          de: '8 Stunden langsam mit Wurzelgemüse gekocht.',
+          sr: 'Kuvano polako 8 sati posluženo uz povrće.',
+          ru: 'Томится в течение 8 часов с овощами.'
+        },
+        making: {
+          en: 'Tender beef chunks simmered slowly in a rich red wine and tomato base with carrots, celery, and onions. The long cooking process allows the flavors to meld perfectly.',
+          de: 'Zarte Rindfleischstücke, langsam geschmort in einer reichhaltigen Rotwein-Tomaten-Basis mit Karotten, Sellerie und Zwiebeln. Der lange Kochprozess lässt die Aromen perfekt verschmelzen.',
+          sr: 'Nježni komadi govedine krčkani polako u bogatoj osnovi od crvenog vina i paradajza sa mrkvom, celerom i lukom. Dug proces kuvanja omogućava savršeno spajanje ukusa.',
+          ru: 'Нежные кусочки говядины, медленно тушенные в красном вине с томатной пастой, морковью и луком. Длительный процесс приготовления делает вкус идеальным.'
+        }
+      },
+      {
+        main_category: 'food', sub_category: 'cooked', price: 10.00,
+        photo: 'images/tomato.jpg',
+        name: { en: 'Creamy Tomato Soup', de: 'Cremige Tomatensuppe', sr: 'Krem čorba od paradajza', ru: 'Томатный крем-суп' },
+        desc: {
+          en: 'Homemade soup with fresh basil and croutons.',
+          de: 'Hausgemachte Suppe mit frischem Basilikum und Croutons.',
+          sr: 'Domaća čorba sa svježim bosiljkom i krutonima.',
+          ru: 'Домашний суп со свежим базиликом и сухариками.'
+        },
+        making: {
+          en: 'Made from sun-ripened tomatoes, blended with a touch of heavy cream and fresh herbs. Served with artisanal croutons toasted in olive oil.',
+          de: 'Aus sonnengereiften Tomaten hergestellt, gemischt mit einem Schuss Sahne und frischen Kräutern. Serviert mit in Olivenöl gerösteten handwerklichen Croutons.',
+          sr: 'Napravljeno od paradajza sazrelog na suncu, izblendano sa malo pavlake i svježim začinskim biljem. Služi se uz krutone prepečene na maslinovom ulju.',
+          ru: 'Приготовлен из спелых томатов со сливками и свежими травами. Подается с гренками на оливковом масле.'
+        }
+      },
+      // DRINKS - COFFEE
+      {
+        main_category: 'drinks', sub_category: 'coffee', price: 2.50,
+        photo: 'images/espresso.jpg',
+        name: { en: 'Espresso', de: 'Espresso', sr: 'Espreso', ru: 'Эспрессо' },
+        desc: { en: 'Rich and intense.', de: 'Reichhaltig und intensiv.', sr: 'Snažan i intenzivan ukus.', ru: 'Насыщенный и крепкий.' },
+        making: {
+          en: 'Double shot of our signature dark roast beans, extracted at 9 bars of pressure to create a perfect, golden crema.',
+          de: 'Doppelter Schuss unserer charakteristischen dunklen Röstbohnen, extrahiert bei 9 Bar Druck, um eine perfekte, goldene Crema zu erzeugen.',
+          sr: 'Dupli dozirani espreso od naših posebno prženih zrna, ekstrahovan pod pritiskom od 9 bari za savršenu, zlatnu kremu.',
+          ru: 'Двойная порция наших фирменных зерен темной обжарки с идеальной золотистой пенкой.'
+        }
+      },
+      {
+        main_category: 'drinks', sub_category: 'coffee', price: 3.50,
+        photo: 'images/cappucino.jpg',
+        name: { en: 'Cappuccino', de: 'Cappuccino', sr: 'Kapućino', ru: 'Капучино' },
+        desc: { en: 'Espresso with steamed milk foam.', de: 'Espresso mit aufgeschäumter Milch.', sr: 'Espreso sa pjenom od mlijeka.', ru: 'Эспрессо с молочной пеной.' },
+        making: {
+          en: 'One part espresso, one part steamed milk, and one part velvety milk foam. Topped with a dusting of fine cocoa powder.',
+          de: 'Ein Teil Espresso, ein Teil gedünstete Milch und ein Teil samtiger Milchschaum. Garniert mit einer Prise feinem Kakaopulver.',
+          sr: 'Jedan dio espresa, jedan dio zagrijanog mlijeka i jedan dio baršunaste mliječne pjene. Na vrhu sa malo finog kakao praha.',
+          ru: 'Порция эспрессо, горячее молоко и пышная молочная пенка с какао.'
+        }
+      },
+      // DRINKS - JUICES
+      {
+        main_category: 'drinks', sub_category: 'juices', price: 3.00,
+        photo: 'images/cocacola.jpg',
+        name: { en: 'Coca-Cola', de: 'Coca-Cola', sr: 'Koka-kola', ru: 'Кока-кола' },
+        desc: { en: '0.33l Bottle', de: '0.33l Flasche', sr: 'Flašica 0.33l', ru: 'Бутылка 0.33л' },
+        making: {
+          en: 'Chilled glass bottle, served with ice and a lemon wedge upon request.',
+          de: 'Gekühlte Glasflasche, auf Wunsch mit Eis und einer Zitronenspalte serviert.',
+          sr: 'Rashlađena staklena flašica, služi se sa ledom i kriškom limuna po želji.',
+          ru: 'Охлажденный напиток в стеклянной бутылке, подается с лимоном.'
+        }
+      },
+      // DRINKS - NATURAL JUICES
+      {
+        main_category: 'drinks', sub_category: 'natural_juices', price: 4.50,
+        photo: 'images/orange.jpg',
+        name: { en: 'Fresh Orange Juice', de: 'Frischer Orangensaft', sr: 'Svježe cijeđena narandža', ru: 'Апельсиновый фреш' },
+        desc: { en: '100% freshly squeezed.', de: '100% frisch gepresst.', sr: '100% svježe cijeđeno.', ru: '100% натуральный сок.' },
+        making: {
+          en: 'Fresh oranges squeezed at the moment of order to ensure maximum vitamin content and flavor.',
+          de: 'Frische Orangen, die zum Zeitpunkt der Bestellung gepresst werden, um maximalen Vitamin- und Geschmacksgehalt zu gewährleisten.',
+          sr: 'Svježe narandže cijeđene u trenutku narudžbe kako bi se osigurao maksimalni sadržaj vitamina i pun ukus.',
+          ru: 'Свежевыжатый сок из отборных апельсинов прямо перед подачей.'
+        }
+      },
+      {
+        main_category: 'drinks', sub_category: 'natural_juices', price: 4.50,
+        photo: 'images/lemonade.jpg',
+        name: { en: 'Lemonade', de: 'Limonade', sr: 'Limunada', ru: 'Лимонад' },
+        desc: { en: 'Fresh lemons, mint, ice.', de: 'Frische Zitronen, Minze, Eis.', sr: 'Svjež limun, nana i led.', ru: 'Лимон, мята, лед.' },
+        making: {
+          en: 'Cold-pressed lemon juice mixed with honey or brown sugar, fresh mint leaves, and filtered water over ice.',
+          de: 'Kaltgepresster Zitronensaft gemischt mit Honig oder braunem Zucker, frischen Minzblättern und gefiltertem Wasser auf Eis.',
+          sr: 'Hladno cijeđeni sok od limuna pomiješan sa medom ili smeđim šećerom, listićima nane i filtriranom vodom preko leda.',
+          ru: 'Лимонный сок с мятой и льдом, подслащенный медом или тростниковым сахаром.'
+        }
+      },
+      // DRINKS - ALCOHOL
+      {
+        main_category: 'drinks', sub_category: 'alcohol', price: 6.00,
+        photo: 'images/beer.jpg',
+        name: { en: 'Craft Beer', de: 'Craft Bier', sr: 'Zanatsko Pivo', ru: 'Крафтовое пиво' },
+        desc: { en: 'Local Pale Ale, 0.5l', de: 'Lokales Pale Ale, 0.5l', sr: 'Lokalno svijetlo pivo, 0.5l', ru: 'Светлый эль, 0.5л' },
+        making: {
+          en: 'Brewed locally using traditional methods, featuring notes of citrus and a smooth malty finish.',
+          de: 'Lokal nach traditionellen Methoden gebraut, mit Noten von Zitrusfrüchten und einem weichen, malzigen Abgang.',
+          sr: 'Vareno lokalno tradicionalnim metodama, sa notama citrusa i blagim ukusom slada.',
+          ru: 'Сварено по традиционным рецептам с цитрусовыми нотками.'
+        }
+      },
+      {
+        main_category: 'drinks', sub_category: 'alcohol', price: 25.00,
+        photo: 'images/souvignon.jpg',
+        name: { en: 'Cabernet Sauvignon', de: 'Cabernet Sauvignon', sr: 'Kaberne Sovinjon', ru: 'Каберне Совиньон' },
+        desc: { en: 'Bottle 0.75l, Premium Red Wine', de: 'Flasche 0.75l, Premium Rotwein', sr: 'Flaša 0.75l, Vrhunsko crveno vino', ru: 'Вино 0.75л, Премиум' },
+        making: {
+          en: 'A full-bodied red wine with deep dark fruit flavors and elegant tannins. Perfect pairing with grilled steaks.',
+          de: 'Ein vollmundiger Rotwein mit tiefen dunklen Fruchtaromen und eleganten Tanninen. Perfekt zu gegrillten Steaks.',
+          sr: 'Vrhunsko crveno vino punog tijela sa aromama tamnog voća i elegantnim taninima. Savršeno uz ramstek.',
+          ru: 'Вино с глубоким вкусом темных ягод и элегантными таннинами. Идеально к стейку.'
+        }
+      }
+    ];
+
+    // --- State ---
+    let appState = {
+      lang: 'sr',
+      mainCategory: 'food',
+      subCategory: 'all'
+    };
+
+
+    // --- Functions ---
+
+    function toggleLangDropdown() {
+      document.getElementById('lang-menu').classList.toggle('show');
+    }
+    
+    function closeLangDropdown() {
+      document.getElementById('lang-menu').classList.remove('show');
+    }
+
+    // Close dropdown if clicked outside
+    window.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('lang-dropdown');
+      if (dropdown && !dropdown.contains(e.target)) {
+        closeLangDropdown();
+      }
+    });
+
+    function selectLanguage(langCode) {
+      appState.lang = langCode;
+
+      // Update flag icon
+      const flags = { 
+        en: 'https://flagcdn.com/w40/gb.png', 
+        de: 'https://flagcdn.com/w40/de.png', 
+        sr: 'https://flagcdn.com/w40/rs.png', 
+        ru: 'https://flagcdn.com/w40/ru.png' 
+      };
+      const flagSpan = document.getElementById('current-lang-flag');
+      if (flagSpan) flagSpan.src = flags[langCode];
+
+      // Update UI translations
+      document.getElementById('ui-back').innerText = uiTranslations[langCode].back;
+      document.getElementById('btn-food').innerText = uiTranslations[langCode].food;
+      document.getElementById('btn-drinks').innerText = uiTranslations[langCode].drink;
+      
+      const callBtn = document.getElementById('ui-call-btn');
+      if (callBtn) callBtn.innerText = uiTranslations[langCode].callUs;
+      
+      const reviewBtn = document.getElementById('ui-review-btn');
+      if (reviewBtn) reviewBtn.innerText = uiTranslations[langCode].rateUs;
+
+      const langScreen = document.getElementById('language-screen');
+      const menuScreen = document.getElementById('menu-screen');
+
+      // Update items before showing
+      updateFeedbackTranslations();
+      renderSubNav();
+      renderItems();
+
+      if (langScreen && langScreen.classList.contains('active')) {
+        // We are on the landing page, animated transition safely
+        menuScreen.classList.add('slide-prepare-right');
+        
+        setTimeout(() => {
+          langScreen.classList.add('slide-out-left');
+          menuScreen.classList.add('slide-active');
+
+          setTimeout(() => {
+            langScreen.classList.add('hidden');
+            langScreen.classList.remove('slide-out-left', 'active');
+            menuScreen.classList.remove('slide-prepare-right', 'slide-active');
+            menuScreen.classList.add('active');
+            menuScreen.style.position = 'relative'; 
+            window.scrollTo(0, 0);
+          }, 400);
+        }, 50);
+      }
+    }
+
+    function openFeedback() {
+      updateFeedbackTranslations();
+      const feedbackScreen = document.getElementById('feedback-screen');
+      feedbackScreen.classList.add('slide-prepare-right');
+      
+      setTimeout(() => {
+        feedbackScreen.classList.add('slide-active');
+        document.body.style.overflow = 'hidden';
+      }, 50);
+    }
+
+    function closeFeedback() {
+      const feedbackScreen = document.getElementById('feedback-screen');
+      feedbackScreen.classList.add('slide-out-right');
+      
+      setTimeout(() => {
+        feedbackScreen.classList.remove('active', 'slide-prepare-right', 'slide-active', 'slide-out-right');
+        document.body.style.overflow = 'auto';
+        document.body.style.overflowX = 'hidden';
+
+        // Reset form
+        document.getElementById('feedback-form-content').style.display = 'block';
+        document.getElementById('feedback-thanks').style.display = 'none';
+        resetStars();
+        document.getElementById('feedback-comment').value = '';
+      }, 400);
+    }
+
+    function updateFeedbackTranslations() {
+      const t = uiTranslations[appState.lang];
+      if (document.getElementById('ui-back-feedback')) document.getElementById('ui-back-feedback').innerText = t.back;
+      if (document.getElementById('ui-opinion-title')) document.getElementById('ui-opinion-title').innerText = t.opinionTitle;
+      if (document.getElementById('ui-service-label')) document.getElementById('ui-service-label').innerText = t.serviceLabel;
+      if (document.getElementById('ui-food-label')) document.getElementById('ui-food-label').innerText = t.foodLabel;
+      if (document.getElementById('ui-comment-label')) document.getElementById('ui-comment-label').innerText = t.commentLabel;
+      if (document.getElementById('ui-submit-btn')) document.getElementById('ui-submit-btn').innerText = t.submitBtn;
+      if (document.getElementById('ui-thanks-title')) document.getElementById('ui-thanks-title').innerText = t.thanksTitle;
+      if (document.getElementById('ui-thanks-text')) document.getElementById('ui-thanks-text').innerText = t.thanksText;
+      if (document.getElementById('feedback-comment')) document.getElementById('feedback-comment').placeholder = t.placeholder;
+      if (document.getElementById('detail-ui-making')) document.getElementById('detail-ui-making').innerText = t.makingTitle;
+    }
+
+    let ratings = { service: 0, food: 0 };
+
+    // Star Selection
+    document.querySelectorAll('.stars .star').forEach(star => {
+      star.onclick = (e) => {
+        const value = parseInt(e.target.dataset.value);
+        const category = e.target.parentElement.dataset.category;
+        ratings[category] = value;
+
+        // Add pop animation
+        e.target.classList.add('pop-anim');
+        setTimeout(() => e.target.classList.remove('pop-anim'), 300);
+
+        // Highlight stars
+        const stars = e.target.parentElement.querySelectorAll('.star');
+        stars.forEach((s, idx) => {
+          s.classList.toggle('active', idx < value);
+        });
+      };
+    });
+
+    function resetStars() {
+      ratings = { service: 0, food: 0 };
+      document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+    }
+
+    function submitFeedback() {
+      // Basic validation
+      if (ratings.service === 0 || ratings.food === 0) {
+        alert(appState.lang === 'sr' ? "Molimo ocijenite uslugu i hranu." : "Please rate both service and food.");
+        return;
+      }
+
+      // Simulate submission
+      document.getElementById('feedback-form-content').style.display = 'none';
+      document.getElementById('feedback-thanks').style.display = 'block';
+    }
+
+    function goBack() {
+      const langScreen = document.getElementById('language-screen');
+      const menuScreen = document.getElementById('menu-screen');
+
+      // Prepare Language Screen (slide in from left)
+      langScreen.classList.add('slide-prepare-left');
+
+      setTimeout(() => {
+        menuScreen.classList.add('slide-out-right');
+        langScreen.classList.add('slide-active');
+
+        setTimeout(() => {
+          menuScreen.classList.remove('active', 'slide-out-right');
+          langScreen.classList.remove('hidden', 'slide-prepare-left', 'slide-active');
+          langScreen.classList.add('active'); 
+          langScreen.style.position = 'relative';
+          window.scrollTo(0, 0);
+        }, 400);
+      }, 50);
+    }
+
+    function setMainCategory(cat) {
+      appState.mainCategory = cat;
+      appState.subCategory = 'all'; // reset to all when switching main category
+
+      // Update main nav buttons
+      document.getElementById('btn-food').classList.toggle('active', cat === 'food');
+      document.getElementById('btn-drinks').classList.toggle('active', cat === 'drinks');
+
+      renderSubNav();
+      renderItems();
+    }
+
+    function setSubCategory(subCat) {
+      appState.subCategory = subCat;
+      renderSubNav(); // To update active class
+      renderItems();
+    }
+
+    function renderSubNav() {
+      const container = document.getElementById('sub-nav-container');
+      container.innerHTML = ''; // clear
+
+      const subs = categoriesMap[appState.mainCategory];
+
+      subs.forEach(sub => {
+        const btn = document.createElement('button');
+        btn.className = `sub-nav-btn ${appState.subCategory === sub ? 'active' : ''}`;
+        btn.innerText = subcategoryTranslations[sub][appState.lang];
+        btn.onclick = () => setSubCategory(sub);
+        container.appendChild(btn);
+      });
+    }
+
+    function renderItems() {
+      const container = document.getElementById('menu-items-container');
+      
+      // Trigger re-animation
+      container.classList.remove('re-animate');
+      void container.offsetWidth; // Force reflow
+      container.classList.add('re-animate');
+
+      container.innerHTML = '';
+
+      const EUR_TO_BAM = 1.95583;
+
+      const filteredItems = menuItems.filter(item => {
+        const matchesMain = item.main_category === appState.mainCategory;
+        const matchesSub = appState.subCategory === 'all' || item.sub_category === appState.subCategory;
+        return matchesMain && matchesSub;
+      });
+
+      if (filteredItems.length === 0) {
+        container.innerHTML = `<div class="empty-state">${uiTranslations[appState.lang].empty}</div>`;
+        return;
+      }
+
+      filteredItems.forEach((item, index) => {
+        let priceDisplay = '';
+        if (appState.lang === 'sr') {
+          const converted = (item.price * EUR_TO_BAM).toFixed(2);
+          priceDisplay = `${converted} KM`;
+        } else {
+          priceDisplay = `${item.price.toFixed(2)} €`;
+        }
+
+
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        
+        if (appState.mainCategory === 'food') {
+          if (item.sub_category === 'house_special') {
+            div.classList.add('house-special');
+          } else if (item.sub_category === 'best_sellers') {
+            div.classList.add('best-seller');
+          }
+        }
+
+        div.style.animationDelay = `${index * 0.05}s`; // Staggered animation
+
+        div.innerHTML = `
+          <div class="item-photo" onclick="openImageModal('${item.photo || 'images (1).jpg'}')">
+            ${item.photo ? `<img src="${item.photo}" alt="photo">` : '<img src="images (1).jpg" alt="placeholder" style="filter: grayscale(1); opacity: 0.3;">'}
+          </div>
+          <div class="item-info">
+            <h3 class="item-title">${item.name[appState.lang]}</h3>
+            <p class="item-desc" onclick="openDetailModal(${menuItems.indexOf(item)})">${item.desc[appState.lang]}</p>
+          </div>
+          <div class="item-price">${priceDisplay}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Modal Functions
+    function openImageModal(src) {
+      const modal = document.getElementById('image-modal');
+      const img = document.getElementById('modal-img');
+      img.src = src;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openDetailModal(itemIndex) {
+      const item = menuItems[itemIndex];
+      const modal = document.getElementById('detail-modal');
+
+      document.getElementById('detail-item-name').innerText = item.name[appState.lang];
+      document.getElementById('detail-item-making').innerText = item.making[appState.lang];
+
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModals() {
+      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+      document.body.style.overflow = 'auto';
+      document.body.style.overflowX = 'hidden';
+    }
+
+    function openAbout() {
+      document.getElementById('about-modal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeAbout() {
+      document.getElementById('about-modal').classList.remove('active');
+      document.body.style.overflow = 'auto';
+      document.body.style.overflowX = 'hidden';
+    }
+
+    // Scroll to Top Logic
+    const scrollTopBtn = document.getElementById('scroll-top-btn');
+    window.addEventListener('scroll', () => {
+      // Show button if we've scrolled past the menu header
+      if (window.scrollY > window.innerHeight + 100) {
+        scrollTopBtn.classList.add('visible');
+      } else {
+        scrollTopBtn.classList.remove('visible');
+      }
+    });
+
+    // No scroll logic needed as per user request for fixed position
+
+    function scrollToMenuTop() {
+      const menuScreen = document.getElementById('menu-screen');
+      menuScreen.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Splash Screen Logic
+    window.addEventListener('load', () => {
+      const splash = document.getElementById('splash-screen');
+      
+      // Removed sessionStorage check to play every time
+      setTimeout(() => {
+        splash.classList.add('slide-up');
+        document.body.style.overflow = 'auto';
+        document.body.style.overflowX = 'hidden';
+        
+        // Clean up DOM after animation
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 800);
+      }, 2200); // Show splash for 2.2 seconds
+    });
+
+    // Footer Jump Animation Logic
+    const footerObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('jump-animate');
+        } else {
+          // Optional: remove to re-trigger every time
+          // entry.target.classList.remove('jump-animate');
+        }
+      });
+    }, { threshold: 0.2 });
+
+    const menuFooter = document.querySelector('.menu-footer');
+    if (menuFooter) footerObserver.observe(menuFooter);
+
+  </script>
+
+
+
+
+</body>
+
+</html>
